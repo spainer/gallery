@@ -1,0 +1,24 @@
+services:
+  webserver:
+    build: webserver
+    ports:
+      - "8080:80"
+    volumes:
+      - type: bind
+        source: .
+        target: /var/www/html
+
+  mariadb:
+    image: mariadb:10.5.19
+    volumes:
+      - type: volume
+        source: mariadb
+        target: /var/lib/mysql
+    environment:
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: yes
+      MARIADB_USER: dbUser
+      MARIADB_PASSWORD: dbPassword
+      MARIADB_DATABASE: db
+
+volumes:
+  mariadb:

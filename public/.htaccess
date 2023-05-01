@@ -1,0 +1,44 @@
+# File is based on https://gist.github.com/alch/7766993
+
+# Use the front controller as index file.
+#DirectoryIndex index.html
+
+# Disabling MultiViews prevents unwanted negotiation, e.g. "/index" should not resolve
+# to the front controller "/index.php" but be rewritten to "/index.php/index".
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Sets the HTTP_AUTHORIZATION header removed by Apache
+    RewriteCond %{HTTP:Authorization} .+
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
+
+    # Removes the /index.php/ part from a URL, if present
+    RewriteCond %{ENV:REDIRECT_STATUS} =""
+    RewriteRule ^index\.php(?:/(.*)|$) %{DOCUMENT_ROOT}/$1 [R=301,L]
+
+    # Serve existing files directly
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Also serve existing frontend assets directly
+    RewriteCond %{DOCUMENT_ROOT}/frontend/%{REQUEST_URI} -f
+    RewriteRule ^(.+) %{DOCUMENT_ROOT}/frontend/$1 [L]
+
+    # Serve backend at /api subroutes (plus debugging plus with _ prefix)
+    RewriteRule ^(api|_) %{DOCUMENT_ROOT}/index.php [L]
+
+    # All other routes should serve frontend
+    RewriteRule ^ %{DOCUMENT_ROOT}/frontend/index.html [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        # When mod_rewrite is not available, we instruct a temporary redirect 
+        # to the front controller explicitly so that the website
+        RedirectMatch 307 ^/$ /index.php/
+    </IfModule>
+</IfModule>
