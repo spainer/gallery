@@ -1,3 +1,5 @@
+/images/*
+!/images/.gitkeep
 
 ###> symfony/framework-bundle ###
 /.env.local
