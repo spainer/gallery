@@ -16,6 +16,7 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 
 use App\Controller\ImageUploadController;
+use App\State\ImageProcessor;
 
 #[ORM\Entity(repositoryClass: ImageRepository::class)]
 #[ApiResource(
@@ -24,7 +25,7 @@ use App\Controller\ImageUploadController;
         new GetCollection(),
         new Put(),
         new Patch(),
-        new Delete()
+        new Delete(processor: ImageProcessor::class)
     ]
 )]
 #[ApiResource(
