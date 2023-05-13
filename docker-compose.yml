@@ -5,7 +5,7 @@ services:
       - "8080:80"
     volumes:
       - type: bind
-        source: .
+        source: backend
         target: /var/www/html
 
   mariadb:
