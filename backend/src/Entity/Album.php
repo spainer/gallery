@@ -23,6 +23,9 @@ class Album
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    #[ORM\Column(length: 255)]
+    private ?string $slug = null;
+
     #[ORM\OneToMany(mappedBy: 'album', targetEntity: Image::class, orphanRemoval: true)]
     private Collection $images;
 
@@ -44,6 +47,18 @@ class Album
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): self
+    {
+        $this->slug = $slug;
 
         return $this;
     }
@@ -77,4 +92,9 @@ class Album
 
         return $this;
     }
+
+    public function getPreviewImage(): ?Image {
+        return $this->image->count() > 0 ? $this->images->get(0) : null;
+    }
+
 }
