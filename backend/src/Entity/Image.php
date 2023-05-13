@@ -20,6 +20,7 @@ use Symfony\Component\Uid\Uuid;
 
 use App\Controller\ImageUploadController;
 use App\State\ImageProcessor;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ImageRepository::class)]
 #[ApiResource(
@@ -29,6 +30,12 @@ use App\State\ImageProcessor;
         new Put(),
         new Patch(),
         new Delete(processor: ImageProcessor::class)
+    ],
+    normalizationContext: [
+        'groups' => ['image:read']
+    ],
+    denormalizationContext: [
+        'groups' => ['image:write']
     ]
 )]
 #[ApiResource(
@@ -38,15 +45,18 @@ use App\State\ImageProcessor;
             fromClass: Album::class,
             fromProperty: 'images'
         )
-        ],
-        operations: [
-            new GetCollection(),
-            new Post(
-                controller: ImageUploadController::class,
-                read: false,
-                deserialize: false
-            )
-        ]
+    ],
+    operations: [
+        new GetCollection(),
+        new Post(
+            controller: ImageUploadController::class,
+            read: false,
+            deserialize: false
+        )
+    ],
+    normalizationContext: [
+        'groups' => ['image:read']
+    ]
 )]
 class Image
 {
@@ -54,27 +64,40 @@ class Image
     #[ORM\Column(type: UuidType::NAME, unique:true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    #[Groups(['image:read'])]
     private $id;
 
     #[ORM\ManyToOne(inversedBy: 'images')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['image:read'])]
     private ?Album $album = null;
 
     #[ORM\Column(length: 4, nullable: true)]
+    #[Groups(['image:read'])]
     private ?string $type = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['image:read'])]
     private ?\DateTimeInterface $imageDate = null;
 
     #[ORM\OneToMany(mappedBy: 'image', targetEntity: ExifData::class, orphanRemoval: true)]
+    #[Groups(['image:read'])]
     private Collection $exifData;
 
     #[ORM\ManyToMany(targetEntity: Tag::class, mappedBy: 'images')]
+    #[Groups(['image:read', 'image:write'])]
     private Collection $tags;
 
     #[ORM\ManyToOne(inversedBy: 'images')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $user = null;
+    #[Groups(['image:read'])]
+    private ?User $author = null;
+
+    /**
+     * @var array<string,string>
+     */
+    #[Groups(['image:read', 'album:read'])]
+    private array $urls;
 
     public function __construct()
     {
@@ -180,15 +203,22 @@ class Image
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getAuthor(): ?User
     {
-        return $this->user;
+        return $this->author;
     }
 
-    public function setUser(?User $user): self
+    public function setAuthor(?User $author): self
     {
-        $this->user = $user;
+        $this->author = $author;
 
         return $this;
+    }
+
+    public function getUrls(): array {
+        if ($this->urls === null) {
+            $this->urls = array();
+        }
+        return $this->urls;
     }
 }

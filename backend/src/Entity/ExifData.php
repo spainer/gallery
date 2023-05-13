@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ExifDataRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ExifDataRepository::class)]
 class ExifData
@@ -18,9 +19,11 @@ class ExifData
     private ?Image $image = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['image:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['image:read'])]
     private ?string $value = null;
 
     public function getId(): ?int

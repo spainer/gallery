@@ -8,31 +8,49 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TagRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    normalizationContext: [
+        'groups' => ['tag:read']
+    ],
+    denormalizationContext: [
+        'groups' => ['tag:write']
+    ]
+)]
 class Tag
 {
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME, unique:true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    #[Groups(['tag:read'])]
     private $id;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['tag:read', 'tag:write'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     private ?string $name = null;
 
     #[ORM\ManyToOne(targetEntity: Tag::class, inversedBy: 'children')]
+    #[Groups(['tag:read', 'tag:write'])]
+    #[Assert\NotNull]
     private ?Tag $parent = null;
 
     #[ORM\OneToMany(targetEntity: Tag::class, mappedBy: 'parent')]
+    #[Groups(['tag:read', 'tag:write'])]
     private Collection $children;
 
     #[ORM\Column]
-    private ?bool $public = null;
+    #[Groups(['tag:read', 'tag:write'])]
+    private bool $public = true;
 
     #[ORM\ManyToMany(targetEntity: Image::class, inversedBy: 'tags')]
+    #[Groups(['tag:read', 'tag:write'])]
     private Collection $images;
 
     public function __construct()
@@ -41,7 +59,7 @@ class Tag
         $this->images = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }
