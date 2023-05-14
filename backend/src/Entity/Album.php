@@ -29,10 +29,15 @@ use Symfony\Component\Validator\Constraints as Assert;
             ]
         ),
         new GetCollection(),
-        new Post(),
-        new Put(),
-        new Patch(),
-        new Delete()
+        new Post(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Patch(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Delete(
+            security: "is_granted('ROLE_USER')"
+        )
     ],
     normalizationContext: [
         'groups' => ['album:read']

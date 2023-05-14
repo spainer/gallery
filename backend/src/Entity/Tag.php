@@ -3,6 +3,11 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 use App\Repository\TagRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -14,6 +19,19 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TagRepository::class)]
 #[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Patch(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Delete(
+            security: "is_granted('ROLE_USER')"
+        )
+    ],
     normalizationContext: [
         'groups' => ['tag:read']
     ],

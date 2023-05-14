@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
+use ApiPlatform\OpenApi\Model;
 use App\Controller\LoginController;
 use App\Repository\UserRepository;
 use App\State\UserProcessor;
@@ -25,15 +26,24 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(),
-        new GetCollection(),
+        new Get(
+            security: "object == user or is_granted('ROLE_ADMIN')"
+        ),
+        new GetCollection(
+            security: "is_granted('ROLE_ADMIN')"
+        ),
         new Post(
-            processor: UserProcessor::class
+            processor: UserProcessor::class,
+            security: "is_granted('ROLE_ADMIN')"
         ),
         new Patch(
-            processor: UserProcessor::class
+            processor: UserProcessor::class,
+            security: "object == user or is_granted('ROLE_ADMIN')",
+            securityPostDenormalize: "object.isAdmin() == previous_object.isAdmin() or is_granted('ROLE_ADMIN')"
         ),
-        new Delete(),
+        new Delete(
+            security: "object == user or is_granted('ROLE_ADMIN')"
+        ),
         new Post(
             name: 'api_login',
             uriTemplate: '/login',
@@ -47,18 +57,55 @@ use Symfony\Component\Validator\Constraints as Assert;
             read: false,
             write: false,
             deserialize: false,
-            status: 204
+            status: 204,
+            openapi: new Model\Operation(
+                summary: "Login to API.",
+                description: "Login to API with user name and password.",
+                requestBody: new Model\RequestBody(
+                    description: "User credentials",
+                    content: new \ArrayObject([
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'username' => ['type' => 'string'],
+                                    'password' => ['type' => 'string']
+                                ]
+                            ]
+                        ]
+                    ]),
+                    required: true
+                ),
+                responses: [
+                    '204' => new Model\Response('Login successful'),
+                    '401' => new Model\Response('Invalid credentials')
+                ]
+            )
         ),
         new Get(
             uriTemplate: '/currentUser',
             controller: LoginController::class,
             normalizationContext: [
                 'groups' => ['user:read']
-            ]
+            ],
+            read: false,
+            openapi: new Model\Operation(
+                summary: "Get information for current user.",
+                description: "Get information for currently logged in user. Returns with 404 if no user is logged in.",
+                responses: [
+                    '200' => new Model\Response('Currently logged in user.'),
+                    '404' => new Model\Response('No user logged in.')
+                ]
+            )
         ),
         new Get(
+            description: "Logout from API",
             name: 'api_logout',
-            uriTemplate: '/logout'
+            uriTemplate: '/logout',
+            openapi: new Model\Operation(
+                summary: "Logout from API.",
+                description: "Logs out from API."
+            )
         )
     ],
     normalizationContext: [

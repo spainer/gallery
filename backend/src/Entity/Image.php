@@ -27,9 +27,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
     operations: [
         new Get(),
         new GetCollection(),
-        new Put(),
-        new Patch(),
-        new Delete(processor: ImageProcessor::class)
+        new Patch(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Delete(
+            processor: ImageProcessor::class,
+            security: "is_granted('ROLE_USER')"
+        )
     ],
     normalizationContext: [
         'groups' => ['image:read']
@@ -49,6 +53,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
     operations: [
         new GetCollection(),
         new Post(
+            security: "is_granted('ROLE_USER')",
             controller: ImageUploadController::class,
             read: false,
             deserialize: false
