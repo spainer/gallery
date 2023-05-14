@@ -3,7 +3,14 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
+use App\Controller\LoginController;
 use App\Repository\UserRepository;
+use App\State\UserProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -11,11 +18,49 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(
+            processor: UserProcessor::class
+        ),
+        new Patch(
+            processor: UserProcessor::class
+        ),
+        new Delete(),
+        new Post(
+            name: 'api_login',
+            uriTemplate: '/login',
+            controller: LoginController::class,
+            normalizationContext: [
+                'groups' => ['user:read']
+            ],
+            denormalizationContext: [
+                'groups' => ['user:login']
+            ],
+            read: false,
+            write: false,
+            deserialize: false,
+            status: 204
+        ),
+        new Get(
+            uriTemplate: '/currentUser',
+            controller: LoginController::class,
+            normalizationContext: [
+                'groups' => ['user:read']
+            ]
+        ),
+        new Get(
+            name: 'api_logout',
+            uriTemplate: '/logout'
+        )
+    ],
     normalizationContext: [
         'groups' => ['user:read']
     ],
@@ -35,18 +80,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 20, unique: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 20)]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'user:login'])]
     private ?string $username = null;
-
-    #[ORM\Column]
-    private array $roles = [];
 
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
-    #[Groups(['user:write'])]
     private ?string $password = null;
+
+    #[Groups(['user:write', 'user:login'])]
+    #[SerializedName('password')]
+    private ?string $plainPassword = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank()]
@@ -63,6 +108,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\OneToMany(mappedBy: 'author', targetEntity: Image::class, orphanRemoval: true)]
     private Collection $images;
+
+    #[ORM\Column]
+    #[Groups(['user:read', 'user:write'])]
+    private ?bool $admin = null;
 
     public function __construct()
     {
@@ -101,18 +150,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
+        $roles = ['ROLE_USER'];
+        if ($this->isAdmin()) {
+            $roles[] = 'ROLE_ADMIN';
+        }
 
         return array_unique($roles);
-    }
-
-    public function setRoles(array $roles): self
-    {
-        $this->roles = $roles;
-
-        return $this;
     }
 
     /**
@@ -130,13 +173,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @see UserInterface
-     */
-    public function eraseCredentials()
+    public function setPlainPassword(string $plainPassword): User
     {
-        // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+        $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
     }
 
     public function getFullname(): ?string
@@ -159,6 +204,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): self
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    public function isAdmin(): ?bool
+    {
+        return $this->admin;
+    }
+
+    public function setAdmin(bool $admin): self
+    {
+        $this->admin = $admin;
 
         return $this;
     }
@@ -191,5 +248,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials()
+    {
+        $this->plainPassword = null;
     }
 }
