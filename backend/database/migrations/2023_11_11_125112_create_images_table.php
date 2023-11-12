@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('images', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignIdFor(Album::class);
-            $table->foreignIdFor(User::class);
+            $table->char('user_id', 2);
             $table->char('type', 4);
             $table->dateTime('imageDate');
             $table->timestamps();
