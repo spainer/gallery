@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignIdFor(Album::class);
             $table->char('user_id', 2);
             $table->char('type', 4);
-            $table->dateTime('imageDate');
+            $table->timestamp('image_date');
             $table->timestamps();
         });
     }

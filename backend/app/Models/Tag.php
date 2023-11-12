@@ -13,15 +13,18 @@ class Tag extends Model
 {
     use HasUlids, HasFactory;
 
-    public function parent(): BelongsTo {
+    public function parent(): BelongsTo
+    {
         return $this->belongsTo(Tag::class, 'parent');
     }
 
-    public function children(): HasMany {
+    public function children(): HasMany
+    {
         return $this->hasMany(Tag::class, 'parent');
     }
 
-    public function images(): BelongsToMany {
+    public function images(): BelongsToMany
+    {
         return $this->belongsToMany(Image::class);
     }
 }

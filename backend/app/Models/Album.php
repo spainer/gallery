@@ -11,7 +11,8 @@ class Album extends Model
 {
     use HasUlids, HasFactory;
 
-    public function images(): HasMany {
+    public function images(): HasMany
+    {
         return $this->hasMany(Image::class);
     }
 }

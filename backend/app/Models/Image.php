@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,19 +16,27 @@ class Image extends Model
 
     protected $touches = ['album'];
 
-    public function exifData(): HasMany {
+    protected $casts = [
+        'image_date' => 'datetime'
+    ];
+
+    public function exifData(): HasMany
+    {
         return $this->hasMany(ExifData::class);
     }
 
-    public function album(): BelongsTo {
+    public function album(): BelongsTo
+    {
         return $this->belongsTo(Album::class);
     }
 
-    public function user(): BelongsTo {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function tags(): BelongsToMany {
+    public function tags(): BelongsToMany
+    {
         return $this->belongsToMany(Tag::class);
     }
 }

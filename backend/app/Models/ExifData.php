@@ -12,7 +12,8 @@ class ExifData extends Model
 
     protected $touches = ['image'];
 
-    public function image(): BelongsTo {
+    public function image(): BelongsTo
+    {
         return $this->belongsTo(Image::class);
     }
 }

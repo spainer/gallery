@@ -19,7 +19,7 @@ class ImageFactory extends Factory
     {
         return [
             'type' => substr($this->faker->fileExtension(), 0, 4),
-            'imageDate' => $this->faker->dateTime()
+            'image_date' => $this->faker->dateTime()
         ];
     }
 }
